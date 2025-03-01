@@ -13,7 +13,6 @@ const KraepelinTest: React.FC = () => {
   const [timer, setTimer] = useState<number>(60);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [totalCorrect, setTotalCorrect] = useState<number>(0);
   const [totalIncorrect, setTotalIncorrect] = useState<number>(0);
@@ -28,13 +27,6 @@ const KraepelinTest: React.FC = () => {
     const answers = Array(6).fill(null);
     const isCorrect = Array(6).fill(false);
     return { numbers, answers, isCorrect };
-  };
-
-  // Check if all inputs in current page are filled
-  const checkAllInputsFilled = () => {
-    return columns.every((column) =>
-      column.answers.every((answer) => answer !== null)
-    );
   };
 
   // Handle next page transition
@@ -62,7 +54,6 @@ const KraepelinTest: React.FC = () => {
 
     // Update all states at once
     setColumns(newColumns);
-    setCurrentPage((prev) => prev + 1);
 
     // Reset transition flag and focus after a short delay
     setTimeout(() => {
@@ -78,7 +69,6 @@ const KraepelinTest: React.FC = () => {
     setTimer(60);
     setIsActive(false);
     setStartTime(null);
-    setCurrentPage(1);
     setTotalCorrect(0);
     setTotalIncorrect(0);
     setShowResults(false);
@@ -274,7 +264,7 @@ const KraepelinTest: React.FC = () => {
                         (totalCorrect / (totalCorrect + totalIncorrect)) * 100
                       )
                     : 0}
-                  %
+                  &nbsp;%
                 </span>
               </div>
             </div>
