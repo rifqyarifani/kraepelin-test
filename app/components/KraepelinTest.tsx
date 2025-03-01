@@ -264,7 +264,7 @@ const KraepelinTest: React.FC = () => {
                         (totalCorrect / (totalCorrect + totalIncorrect)) * 100
                       )
                     : 0}
-                  &nbsp;%
+                  {"%"}
                 </span>
               </div>
             </div>
