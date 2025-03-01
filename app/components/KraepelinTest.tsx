@@ -8,6 +8,55 @@ interface KraepelinColumn {
   isCorrect: boolean[];
 }
 
+const ResultsDisplay = ({
+  totalCorrect,
+  totalIncorrect,
+  onTryAgain,
+}: {
+  totalCorrect: number;
+  totalIncorrect: number;
+  onTryAgain: () => void;
+}) => {
+  const accuracy =
+    totalCorrect + totalIncorrect > 0
+      ? Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100)
+      : 0;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+        <h2 className="text-2xl font-bold mb-6 text-center">Time{"'"}s Up!</h2>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center p-3 bg-green-100 rounded">
+            <span className="font-medium text-green-800">Total Correct:</span>
+            <span className="text-2xl font-bold text-green-600">
+              {totalCorrect}
+            </span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-red-100 rounded">
+            <span className="font-medium text-red-800">Total Incorrect:</span>
+            <span className="text-2xl font-bold text-red-600">
+              {totalIncorrect}
+            </span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-blue-100 rounded">
+            <span className="font-medium text-blue-800">Accuracy:</span>
+            <span className="text-2xl font-bold text-blue-600">
+              {accuracy} {String.fromCharCode(37)}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={onTryAgain}
+          className="mt-6 w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const KraepelinTest: React.FC = () => {
   const [columns, setColumns] = useState<KraepelinColumn[]>([]);
   const [timer, setTimer] = useState<number>(60);
@@ -234,48 +283,12 @@ const KraepelinTest: React.FC = () => {
         </div>
       </div>
 
-      {/* Results Modal */}
       {showResults && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold mb-6 text-center">Time's Up!</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-green-100 rounded">
-                <span className="font-medium text-green-800">
-                  Total Correct:
-                </span>
-                <span className="text-2xl font-bold text-green-600">
-                  {totalCorrect}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-red-100 rounded">
-                <span className="font-medium text-red-800">
-                  Total Incorrect:
-                </span>
-                <span className="text-2xl font-bold text-red-600">
-                  {totalIncorrect}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-blue-100 rounded">
-                <span className="font-medium text-blue-800">Accuracy:</span>
-                <span className="text-2xl font-bold text-blue-600">
-                  {totalCorrect + totalIncorrect > 0
-                    ? Math.round(
-                        (totalCorrect / (totalCorrect + totalIncorrect)) * 100
-                      )
-                    : 0}
-                  {"%"}
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={handleStart}
-              className="mt-6 w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
+        <ResultsDisplay
+          totalCorrect={totalCorrect}
+          totalIncorrect={totalIncorrect}
+          onTryAgain={handleStart}
+        />
       )}
 
       <div className="flex-1 flex justify-center items-center bg-gray-100">
