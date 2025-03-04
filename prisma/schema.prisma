@@ -9,8 +9,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model LeaderboardEntry {
@@ -23,4 +24,12 @@ model LeaderboardEntry {
   date      DateTime @default(now())
 
   @@index([score(sort: Desc)])
+}
+
+model Todo {
+  id        String   @id @default(cuid())
+  title     String
+  complete  Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
