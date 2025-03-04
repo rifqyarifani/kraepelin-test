@@ -27,7 +27,7 @@ const NameInputModal = ({
       <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-xl">
         <h2 className="text-2xl font-bold mb-6">Congratulations! 🎉</h2>
         <p className="text-gray-600 mb-6">
-          You've made it to the top 100! Enter your name to be added to the
+          You&apos;ve made it to the top 100! Enter your name to be added to the
           leaderboard.
         </p>
         <input
@@ -125,7 +125,9 @@ const ResultsDisplay = ({
       )}
       <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 backdrop-blur-[2px]">
         <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
-          <h1 className="text-3xl font-bold mb-8 text-center">Time's Up!</h1>
+          <h1 className="text-3xl font-bold mb-8 text-center">
+            Time&apos;s Up!
+          </h1>
 
           <div className="space-y-4 mb-8">
             {/* Total Correct */}
@@ -148,7 +150,7 @@ const ResultsDisplay = ({
             <div className="bg-[#EFF6FF] rounded-xl p-4 flex justify-between items-center">
               <span className="text-[#1E40AF] text-lg">Accuracy:</span>
               <span className="text-[#1E40AF] text-4xl font-bold">
-                {accuracy} %
+                {accuracy}&nbsp;%
               </span>
             </div>
 

@@ -1,24 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import Navbar from "./Navbar";
+
+interface AppWrapperProps {
+  children: React.ReactNode;
+  isActive: boolean;
+  timer: number;
+}
 
 export default function AppWrapper({
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [isActive, setIsActive] = useState(false);
-  const [timer, setTimer] = useState(0);
-
-  const handleStart = () => {
-    setIsActive(true);
-    // You can add additional start logic here if needed
-  };
-
+  isActive,
+  timer,
+}: AppWrapperProps) {
   return (
     <>
-      <Navbar isActive={isActive} timer={timer} onStart={handleStart} />
+      <Navbar isActive={isActive} timer={timer} />
       {children}
     </>
   );

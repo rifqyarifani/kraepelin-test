@@ -38,7 +38,6 @@ export async function saveLeaderboardEntry(data: {
 
 export async function getLeaderboard(timeRange: "today" | "week" | "month" | "all") {
   try {
-    const now = new Date();
     const startDate = new Date();
 
     switch (timeRange) {

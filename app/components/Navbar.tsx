@@ -13,19 +13,12 @@ const formatTime = (seconds: number): string => {
     .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
-const navItems = [
-  { name: "Home", path: "/" },
-  { name: "Test", path: "/kraepelin" },
-  { name: "Leaderboard", path: "/leaderboard" },
-];
-
 interface NavbarProps {
   isActive: boolean;
   timer: number;
-  onStart: () => void;
 }
 
-export default function Navbar({ isActive, timer, onStart }: NavbarProps) {
+export default function Navbar({ isActive, timer }: NavbarProps) {
   const pathname = usePathname();
 
   return (
