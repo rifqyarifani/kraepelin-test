@@ -7,7 +7,7 @@ export async function checkTopScore(score: number): Promise<boolean> {
     const count = await prisma.leaderboardEntry.count({
       where: {
         score: {
-          gte: score,
+          gt: score,
         },
       },
     });
@@ -28,7 +28,10 @@ export async function saveLeaderboardEntry(data: {
 }) {
   try {
     return await prisma.leaderboardEntry.create({
-      data,
+      data: {
+        ...data,
+        date: new Date(),
+      },
     });
   } catch (error) {
     console.error("Error saving leaderboard entry:", error);
