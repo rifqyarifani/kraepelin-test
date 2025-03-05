@@ -70,7 +70,7 @@ const ResultsDisplay = ({
   onTryAgain: () => void;
 }) => {
   const router = useRouter();
-  const [showNameInput, setShowNameInput] = useState(true);
+  const [showNameInput, setShowNameInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const accuracy =
@@ -79,6 +79,16 @@ const ResultsDisplay = ({
       : 0;
 
   const score = totalCorrect * 10 - totalIncorrect * 5;
+
+  // Use useEffect to set showNameInput after component mount
+  useEffect(() => {
+    // Small delay to ensure consistent behavior in production
+    const timer = setTimeout(() => {
+      setShowNameInput(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleNameSubmit = async (name: string) => {
     try {
