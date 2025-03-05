@@ -91,27 +91,54 @@ const ResultsDisplay = ({
   if (!mounted) return null;
 
   const handleNameSubmit = async (name: string) => {
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    const attemptSubmit = async () => {
+      try {
+        console.log("Submitting score (attempt " + (retryCount + 1) + "):", {
+          name,
+          score,
+          totalCorrect,
+          totalIncorrect,
+          accuracy,
+        });
+        setError(null);
+
+        const result = await saveLeaderboardEntry({
+          name,
+          score,
+          correct: totalCorrect,
+          incorrect: totalIncorrect,
+          accuracy,
+        });
+
+        console.log("Score submission successful:", result);
+        setShowNameInput(false);
+        router.push("/leaderboard");
+      } catch (err) {
+        console.error(
+          "Error saving score (attempt " + (retryCount + 1) + "):",
+          err
+        );
+
+        if (retryCount < maxRetries - 1) {
+          retryCount++;
+          // Wait for 1 second before retrying
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return attemptSubmit();
+        }
+
+        setError("Failed to save your score. Please try again.");
+        throw err;
+      }
+    };
+
     try {
-      console.log("Submitting score:", {
-        name,
-        score,
-        totalCorrect,
-        totalIncorrect,
-        accuracy,
-      });
-      setError(null);
-      await saveLeaderboardEntry({
-        name,
-        score,
-        correct: totalCorrect,
-        incorrect: totalIncorrect,
-        accuracy,
-      });
-      setShowNameInput(false);
-      router.push("/leaderboard");
+      await attemptSubmit();
     } catch (err) {
-      console.error("Error saving score:", err);
-      setError("Failed to save your score. Please try again.");
+      // Final error already handled in attemptSubmit
+      console.error("All retry attempts failed");
     }
   };
 
