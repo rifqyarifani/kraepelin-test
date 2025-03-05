@@ -70,6 +70,7 @@ const ResultsDisplay = ({
   onTryAgain: () => void;
 }) => {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [showNameInput, setShowNameInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,15 +81,14 @@ const ResultsDisplay = ({
 
   const score = totalCorrect * 10 - totalIncorrect * 5;
 
-  // Use useEffect to set showNameInput after component mount
+  // Handle component mount
   useEffect(() => {
-    // Small delay to ensure consistent behavior in production
-    const timer = setTimeout(() => {
-      setShowNameInput(true);
-    }, 100);
-
-    return () => clearTimeout(timer);
+    setMounted(true);
+    setShowNameInput(true);
   }, []);
+
+  // Don't render anything until mounted
+  if (!mounted) return null;
 
   const handleNameSubmit = async (name: string) => {
     try {
@@ -117,7 +117,7 @@ const ResultsDisplay = ({
 
   return (
     <>
-      {showNameInput && (
+      {showNameInput && mounted && (
         <NameInputModal
           onSubmit={handleNameSubmit}
           onClose={() => {
