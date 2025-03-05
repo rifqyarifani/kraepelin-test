@@ -116,10 +116,10 @@ const ResultsDisplay = ({
         console.log("Score submission successful:", result);
         setShowNameInput(false);
         router.push("/leaderboard");
-      } catch (err) {
+      } catch (error) {
         console.error(
           "Error saving score (attempt " + (retryCount + 1) + "):",
-          err
+          error
         );
 
         if (retryCount < maxRetries - 1) {
@@ -130,15 +130,15 @@ const ResultsDisplay = ({
         }
 
         setError("Failed to save your score. Please try again.");
-        throw err;
+        throw error;
       }
     };
 
     try {
       await attemptSubmit();
-    } catch (err) {
+    } catch (error) {
       // Final error already handled in attemptSubmit
-      console.error("All retry attempts failed");
+      console.error("All retry attempts failed:", error);
     }
   };
 
