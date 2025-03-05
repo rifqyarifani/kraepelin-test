@@ -35,6 +35,8 @@ const NameInputModal = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your name"
+          id="player-name"
+          name="player-name"
           className="w-full px-4 py-2 border border-gray-200 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-blue-100"
           maxLength={50}
         />
@@ -507,6 +509,8 @@ const KraepelinTest: React.FC = () => {
                         maxLength={1}
                         autoComplete="off"
                         data-form-type="other"
+                        id={`answer-${colIndex}-${answerIndex}`}
+                        name={`answer-${colIndex}-${answerIndex}`}
                         value={answer ?? ""}
                         onChange={(e) =>
                           handleAnswerChange(
