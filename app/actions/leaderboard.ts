@@ -29,7 +29,6 @@ export async function saveLeaderboardEntry(data: {
   accuracy: number;
 }) {
   const maxRetries = 3;
-  let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -43,13 +42,16 @@ export async function saveLeaderboardEntry(data: {
       return result;
     } catch (error) {
       console.error(`Error saving leaderboard entry (attempt ${attempt + 1}):`, error);
-      lastError = error as Error;
+      
+      // If this is the last attempt, throw the error
+      if (attempt === maxRetries - 1) {
+        throw new Error("Failed to save your score after multiple attempts. Please try again.");
+      }
+      
       // Wait a short time before retrying
       await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
     }
   }
-
-  throw new Error("Failed to save your score after multiple attempts. Please try again.");
 }
 
 export async function getLeaderboard(timeRange: "today" | "week" | "month" | "all") {
