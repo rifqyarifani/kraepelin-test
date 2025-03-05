@@ -7,11 +7,13 @@ export async function checkTopScore(score: number): Promise<boolean> {
     const count = await prisma.leaderboardEntry.count({
       where: {
         score: {
-          gt: score,
+          gte: score,
         },
       },
     });
 
+    // If there are less than 100 scores greater than or equal to the current score,
+    // then this score qualifies for top 100
     return count < 100;
   } catch (error) {
     console.error("Error checking top score:", error);
