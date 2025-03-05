@@ -42,10 +42,16 @@ export async function saveLeaderboardEntry(data: {
 export async function getLeaderboard(timeRange: "today" | "week" | "month" | "all") {
   try {
     if (timeRange === "all") {
-      return await prisma.leaderboardEntry.findMany({
+      const entries = await prisma.leaderboardEntry.findMany({
         orderBy: { score: "desc" },
         take: 100,
       });
+      
+      // Convert Date objects to ISO strings for serialization
+      return entries.map(entry => ({
+        ...entry,
+        date: entry.date.toISOString()
+      }));
     }
     
     const now = new Date();
@@ -66,7 +72,7 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
         break;
     }
 
-    return await prisma.leaderboardEntry.findMany({
+    const entries = await prisma.leaderboardEntry.findMany({
       where: {
         date: {
           gte: startDate,
@@ -75,6 +81,12 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
       orderBy: { score: "desc" },
       take: 100,
     });
+    
+    // Convert Date objects to ISO strings for serialization
+    return entries.map(entry => ({
+      ...entry,
+      date: entry.date.toISOString()
+    }));
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
     throw new Error("Failed to load leaderboard. Please try again.");

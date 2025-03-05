@@ -11,7 +11,9 @@ interface DbLeaderboardEntry {
   name: string;
   score: number;
   accuracy: number;
-  date: Date;
+  correct: number;
+  incorrect: number;
+  date: string; // Changed from Date to string since it comes as ISO string from the server
 }
 
 interface LeaderboardEntry extends DbLeaderboardEntry {
@@ -67,6 +69,20 @@ const LeaderboardPage = () => {
 
     fetchData();
   }, [selectedRange]);
+
+  // Safe date formatter function
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", dateString, error);
+      return "Invalid date";
+    }
+  };
 
   const timeRanges: TimeRange[] = [
     "Today",
@@ -213,11 +229,7 @@ const LeaderboardPage = () => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                    {new Date(entry.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    {formatDate(entry.date)}
                   </div>
                 </div>
               ))
