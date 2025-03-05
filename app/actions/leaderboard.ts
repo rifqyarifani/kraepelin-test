@@ -4,19 +4,25 @@ import { prisma } from "@/lib/prisma";
 
 export async function checkTopScore(score: number): Promise<boolean> {
   try {
-    // Count how many scores are higher than the current score
-    const higherScores = await prisma.leaderboardEntry.count({
+    // Count how many scores are lower than or equal to the current score
+    const lowerOrEqualScores = await prisma.leaderboardEntry.count({
       where: {
         score: {
-          gt: score,
+          lte: score,
         },
       },
     });
 
-    // If there are less than 100 scores higher than the current score,
-    // then this score qualifies for top 100
-    console.log(`Found ${higherScores} scores higher than ${score}`);
-    return higherScores < 100;
+    // Count total number of scores
+    const totalScores = await prisma.leaderboardEntry.count();
+
+    // Calculate position from the top
+    const positionFromTop = totalScores - lowerOrEqualScores + 1;
+
+    console.log(`Score ${score} is at position ${positionFromTop} from top (total: ${totalScores})`);
+    
+    // If position from top is less than or equal to 100, it's in the top 100
+    return positionFromTop <= 100;
   } catch (error) {
     console.error("Error checking top score:", error);
     return false;
