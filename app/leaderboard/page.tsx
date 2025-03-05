@@ -1,5 +1,4 @@
 import { getLeaderboard } from "@/app/actions/leaderboard";
-import { Search } from "lucide-react";
 import LeaderboardClient from "./leaderboard-client";
 
 export const dynamic = "force-dynamic";
