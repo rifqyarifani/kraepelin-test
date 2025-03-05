@@ -41,30 +41,29 @@ export async function saveLeaderboardEntry(data: {
 
 export async function getLeaderboard(timeRange: "today" | "week" | "month" | "all") {
   try {
-    const startDate = new Date();
-
+    if (timeRange === "all") {
+      return await prisma.leaderboardEntry.findMany({
+        orderBy: { score: "desc" },
+        take: 100,
+      });
+    }
+    
+    const now = new Date();
+    let startDate = new Date(now);
+    
     switch (timeRange) {
       case "today":
         // Start from 00:00:00 today
         startDate.setHours(0, 0, 0, 0);
         break;
       case "week":
-        // Start from previous Monday 00:00:00
-        const day = startDate.getDay();
-        const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
-        startDate.setDate(diff);
-        startDate.setHours(0, 0, 0, 0);
+        // Go back 7 days
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case "month":
-        // Start from 1st of current month 00:00:00
-        startDate.setDate(1);
-        startDate.setHours(0, 0, 0, 0);
+        // Go back 30 days
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
-      case "all":
-        return await prisma.leaderboardEntry.findMany({
-          orderBy: { score: "desc" },
-          take: 100,
-        });
     }
 
     return await prisma.leaderboardEntry.findMany({
@@ -80,4 +79,4 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
     console.error("Error fetching leaderboard:", error);
     throw new Error("Failed to load leaderboard. Please try again.");
   }
-} 
+}
