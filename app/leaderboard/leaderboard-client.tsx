@@ -224,7 +224,7 @@ export default function LeaderboardClient({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    {/* <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <svg
                         width="16"
                         height="16"
@@ -240,7 +240,7 @@ export default function LeaderboardClient({
                           strokeLinejoin="round"
                         />
                       </svg>
-                    </div>
+                    </div> */}
                     <span className="font-medium">{entry.name}</span>
                   </div>
                   <div className="text-[#2563EB] font-semibold">

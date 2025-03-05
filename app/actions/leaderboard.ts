@@ -2,11 +2,6 @@
 
 import { prisma } from "@/lib/prisma";
 
-export async function checkTopScore(score: number): Promise<boolean> {
-  // Always return true to show the prompt
-  return true;
-}
-
 export async function saveLeaderboardEntry(data: {
   name: string;
   score: number;

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Play, Timer } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { checkTopScore, saveLeaderboardEntry } from "@/app/actions/leaderboard";
+import { saveLeaderboardEntry } from "@/app/actions/leaderboard";
 
 interface KraepelinColumn {
   numbers: number[];
@@ -27,8 +27,7 @@ const NameInputModal = ({
       <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-xl">
         <h2 className="text-2xl font-bold mb-6">Congratulations! 🎉</h2>
         <p className="text-gray-600 mb-6">
-          You&apos;ve made it to the top 100! Enter your name to be added to the
-          leaderboard.
+          Enter your name to be added to the leaderboard.
         </p>
         <input
           type="text"
