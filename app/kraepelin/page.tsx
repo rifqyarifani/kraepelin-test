@@ -84,9 +84,12 @@ const ResultsDisplay = ({
 
   useEffect(() => {
     if (!checkedScore) {
+      console.log("Checking score:", score);
       checkTopScore(score)
         .then((isTop100) => {
+          console.log("Is top 100?", isTop100);
           if (isTop100) {
+            console.log("Setting showNameInput to true");
             setShowNameInput(true);
           }
           setCheckedScore(true);
@@ -100,6 +103,13 @@ const ResultsDisplay = ({
 
   const handleNameSubmit = async (name: string) => {
     try {
+      console.log("Submitting score:", {
+        name,
+        score,
+        totalCorrect,
+        totalIncorrect,
+        accuracy,
+      });
       setError(null);
       await saveLeaderboardEntry({
         name,
