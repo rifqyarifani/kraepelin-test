@@ -1,12 +1,23 @@
-import { getLeaderboard } from "@/app/actions/leaderboard";
 import LeaderboardClient from "./leaderboard-client";
+import { getLeaderboard } from "@/app/actions/leaderboard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function LeaderboardPage() {
-  // Pre-fetch the initial data on the server
-  const initialData = await getLeaderboard("all");
+  const response = await getLeaderboard("all");
 
-  return <LeaderboardClient initialData={initialData} />;
+  if (!response.success || !response.data) {
+    return (
+      <div className="min-h-screen bg-white p-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center text-red-500 py-8">
+            Failed to load leaderboard. Please try again later.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <LeaderboardClient initialData={response.data} />;
 }

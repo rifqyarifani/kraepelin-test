@@ -101,7 +101,7 @@ const ResultsDisplay = ({
       });
       setError(null);
 
-      const result = await saveLeaderboardEntry({
+      const response = await saveLeaderboardEntry({
         name,
         score,
         correct: totalCorrect,
@@ -109,12 +109,20 @@ const ResultsDisplay = ({
         accuracy,
       });
 
-      console.log("Score submission successful:", result);
+      if (!response.success) {
+        throw new Error(response.error || "Failed to save score");
+      }
+
+      console.log("Score submission successful:", response.data);
       setShowNameInput(false);
       router.push("/leaderboard");
     } catch (error) {
       console.error("Error saving score:", error);
-      setError("Failed to save your score. Please try again.");
+      setError(
+        typeof error === "object" && error !== null && "message" in error
+          ? String(error.message)
+          : "Failed to save your score. Please try again."
+      );
     }
   };
 

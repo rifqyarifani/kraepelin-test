@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function saveLeaderboardEntry(data: {
   name: string;
@@ -10,32 +11,35 @@ export async function saveLeaderboardEntry(data: {
   accuracy: number;
 }) {
   try {
-    // Add index hint for better performance
-    const result = await prisma.$transaction(async (tx) => {
-      const entry = await tx.leaderboardEntry.create({
-        data: {
-          ...data,
-          date: new Date(),
-        },
-      });
-      return entry;
-    }, {
-      timeout: 10000, // 10 second timeout
-      isolationLevel: 'ReadCommitted', // Use a less strict isolation level for better performance
+    // Ensure clean connection state
+    await prisma.$connect();
+
+    // Use a simple create without transaction for better reliability
+    const result = await prisma.leaderboardEntry.create({
+      data: {
+        ...data,
+        date: new Date(),
+      },
     });
+
+    // Force revalidation of the leaderboard page
+    revalidatePath('/leaderboard');
     
-    console.log("Successfully saved leaderboard entry:", result.id);
-    return result;
+    return { success: true, data: result };
   } catch (error) {
     console.error("Error saving leaderboard entry:", error);
-    throw new Error("Failed to save your score. Please try again.");
+    return { success: false, error: "Failed to save score" };
+  } finally {
+    // Always disconnect to ensure clean state for next request
+    await prisma.$disconnect();
   }
 }
 
 export async function getLeaderboard(timeRange: "today" | "week" | "month" | "all") {
-  console.log(`Fetching leaderboard for timeRange: ${timeRange}`);
-  
   try {
+    // Ensure clean connection state
+    await prisma.$connect();
+    
     if (timeRange === "all") {
       const entries = await prisma.leaderboardEntry.findMany({
         select: {
@@ -51,10 +55,13 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
         take: 100,
       });
       
-      return entries.map(entry => ({
-        ...entry,
-        date: entry.date.toISOString()
-      }));
+      return { 
+        success: true, 
+        data: entries.map(entry => ({
+          ...entry,
+          date: entry.date.toISOString()
+        }))
+      };
     }
     
     const now = new Date();
@@ -91,12 +98,18 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
       take: 100,
     });
     
-    return entries.map(entry => ({
-      ...entry,
-      date: entry.date.toISOString()
-    }));
+    return { 
+      success: true, 
+      data: entries.map(entry => ({
+        ...entry,
+        date: entry.date.toISOString()
+      }))
+    };
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
-    throw new Error("Failed to fetch leaderboard. Please try again.");
+    return { success: false, error: "Failed to fetch leaderboard" };
+  } finally {
+    // Always disconnect to ensure clean state for next request
+    await prisma.$disconnect();
   }
 }

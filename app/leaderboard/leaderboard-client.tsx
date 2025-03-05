@@ -3,10 +3,11 @@
 import { useState, useRef } from "react";
 import { Search } from "lucide-react";
 import { getLeaderboard } from "@/app/actions/leaderboard";
+import { formatDate } from "@/lib/utils";
 
 type TimeRange = "Today" | "This Week" | "This Month" | "All Time";
 
-interface DbLeaderboardEntry {
+type DbLeaderboardEntry = {
   id: string;
   name: string;
   score: number;
@@ -14,12 +15,12 @@ interface DbLeaderboardEntry {
   correct: number;
   incorrect: number;
   date: string;
-}
+};
 
-interface LeaderboardEntry extends DbLeaderboardEntry {
-  rank?: number;
-  medal?: "gold" | "silver" | "bronze";
-}
+type LeaderboardEntry = DbLeaderboardEntry & {
+  rank: number;
+  medal: string | null;
+};
 
 interface LeaderboardClientProps {
   initialData: DbLeaderboardEntry[];
@@ -28,29 +29,24 @@ interface LeaderboardClientProps {
 export default function LeaderboardClient({
   initialData,
 }: LeaderboardClientProps) {
-  const [selectedRange, setSelectedRange] = useState<TimeRange>("All Time");
-  const [searchQuery, setSearchQuery] = useState("");
   const [entries, setEntries] = useState<LeaderboardEntry[]>(
     initialData.map((entry, index) => ({
       ...entry,
       rank: index + 1,
-      medal:
-        index < 3
-          ? (["gold", "silver", "bronze"][index] as
-              | "gold"
-              | "silver"
-              | "bronze")
-          : undefined,
+      medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
     }))
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>("All Time");
+  const [searchQuery, setSearchQuery] = useState("");
   const cache = useRef<
     Record<string, { data: LeaderboardEntry[]; timestamp: number }>
   >({});
+
   const CACHE_DURATION = 60 * 1000; // 60 seconds
 
-  const fetchData = async (timeRange: "all" | "week" | "month" | "today") => {
+  const fetchData = async (timeRange: string) => {
     // Check cache first
     const now = Date.now();
     const cachedData = cache.current[timeRange];
@@ -61,40 +57,39 @@ export default function LeaderboardClient({
 
     setLoading(true);
     setError(null);
-    try {
-      const data = await getLeaderboard(timeRange);
 
-      // Add rank and medals
-      const entriesWithRank = data.map(
-        (entry: DbLeaderboardEntry, index: number) => ({
-          ...entry,
-          rank: index + 1,
-          medal:
-            index < 3
-              ? (["gold", "silver", "bronze"][index] as
-                  | "gold"
-                  | "silver"
-                  | "bronze")
-              : undefined,
-        })
+    try {
+      const response = await getLeaderboard(
+        timeRange as "all" | "today" | "week" | "month"
       );
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || "Failed to fetch leaderboard");
+      }
+
+      const entriesWithRankAndMedals = response.data.map((entry, index) => ({
+        ...entry,
+        rank: index + 1,
+        medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
+      }));
 
       // Update cache
       cache.current[timeRange] = {
-        data: entriesWithRank,
-        timestamp: now,
+        data: entriesWithRankAndMedals,
+        timestamp: Date.now(),
       };
 
-      setEntries(entriesWithRank);
+      setEntries(entriesWithRankAndMedals);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       setError("Failed to load leaderboard. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRangeChange = async (range: TimeRange) => {
-    setSelectedRange(range);
+    setTimeRange(range);
     const timeRange =
       range === "All Time"
         ? "all"
@@ -105,20 +100,6 @@ export default function LeaderboardClient({
         : "today";
 
     await fetchData(timeRange);
-  };
-
-  // Safe date formatter function
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch (error) {
-      console.error("Error formatting date:", dateString, error);
-      return "Invalid date";
-    }
   };
 
   const timeRanges: TimeRange[] = [
@@ -142,7 +123,7 @@ export default function LeaderboardClient({
               key={range}
               onClick={() => handleRangeChange(range)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                selectedRange === range
+                timeRange === range
                   ? "bg-white text-black shadow-sm"
                   : "text-gray-600 hover:text-black"
               }`}
@@ -188,7 +169,7 @@ export default function LeaderboardClient({
               <div className="px-6 py-8 text-center text-red-500">
                 {error}
                 <button
-                  onClick={() => handleRangeChange(selectedRange)}
+                  onClick={() => handleRangeChange(timeRange)}
                   className="block mx-auto mt-2 text-sm text-blue-500 hover:text-blue-600"
                 >
                   Try Again
@@ -205,42 +186,21 @@ export default function LeaderboardClient({
                   className="grid grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    {entry.medal ? (
+                    {entry.medal && (
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
-                          entry.medal === "gold"
+                          entry.medal === "🥇"
                             ? "bg-[#FEF9C3] text-[#854D0E]"
-                            : entry.medal === "silver"
+                            : entry.medal === "🥈"
                             ? "bg-gray-100 text-gray-600"
                             : "bg-[#FEF3F2] text-[#B42318]"
                         }`}
                       >
                         {entry.rank}
                       </div>
-                    ) : (
-                      <div className="w-6 h-6 flex items-center justify-center text-sm text-gray-600">
-                        {entry.rank}
-                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M13.3333 14V12.6667C13.3333 11.9594 13.0524 11.2811 12.5523 10.781C12.0522 10.281 11.3739 10 10.6667 10H5.33333C4.62609 10 3.94781 10.281 3.44771 10.781C2.94762 11.2811 2.66666 11.9594 2.66666 12.6667V14M10.6667 4.66667C10.6667 6.13943 9.47276 7.33333 8 7.33333C6.52724 7.33333 5.33333 6.13943 5.33333 4.66667C5.33333 3.19391 6.52724 2 8 2C9.47276 2 10.6667 3.19391 10.6667 4.66667Z"
-                          stroke="#1D4ED8"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div> */}
                     <span className="font-medium">{entry.name}</span>
                   </div>
                   <div className="text-[#2563EB] font-semibold">
