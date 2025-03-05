@@ -40,12 +40,17 @@ export async function saveLeaderboardEntry(data: {
 }
 
 export async function getLeaderboard(timeRange: "today" | "week" | "month" | "all") {
+  console.log(`Fetching leaderboard for timeRange: ${timeRange}`);
+  
   try {
     if (timeRange === "all") {
+      console.log("Fetching all-time leaderboard entries");
       const entries = await prisma.leaderboardEntry.findMany({
         orderBy: { score: "desc" },
         take: 100,
       });
+      
+      console.log(`Found ${entries.length} entries for all-time leaderboard`);
       
       // Convert Date objects to ISO strings for serialization
       return entries.map(entry => ({
@@ -72,6 +77,8 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
         break;
     }
 
+    console.log(`Fetching entries since ${startDate.toISOString()} for ${timeRange} leaderboard`);
+    
     const entries = await prisma.leaderboardEntry.findMany({
       where: {
         date: {
@@ -82,6 +89,8 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
       take: 100,
     });
     
+    console.log(`Found ${entries.length} entries for ${timeRange} leaderboard`);
+    
     // Convert Date objects to ISO strings for serialization
     return entries.map(entry => ({
       ...entry,
@@ -89,6 +98,7 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
     }));
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
-    throw new Error("Failed to load leaderboard. Please try again.");
+    // Return empty array instead of throwing to prevent server errors
+    return [];
   }
 }
