@@ -186,19 +186,19 @@ export default function LeaderboardClient({
                   className="grid grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    {entry.medal && (
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
-                          entry.medal === "🥇"
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
+                        entry.medal
+                          ? entry.medal === "🥇"
                             ? "bg-[#FEF9C3] text-[#854D0E]"
                             : entry.medal === "🥈"
                             ? "bg-gray-100 text-gray-600"
                             : "bg-[#FEF3F2] text-[#B42318]"
-                        }`}
-                      >
-                        {entry.rank}
-                      </div>
-                    )}
+                          : "bg-gray-50 text-gray-600"
+                      }`}
+                    >
+                      {entry.rank}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{entry.name}</span>
