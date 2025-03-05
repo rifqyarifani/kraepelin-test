@@ -71,8 +71,7 @@ const ResultsDisplay = ({
   onTryAgain: () => void;
 }) => {
   const router = useRouter();
-  const [showNameInput, setShowNameInput] = useState(false);
-  const [checkedScore, setCheckedScore] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const accuracy =
@@ -81,25 +80,6 @@ const ResultsDisplay = ({
       : 0;
 
   const score = totalCorrect * 10 - totalIncorrect * 5;
-
-  useEffect(() => {
-    if (!checkedScore) {
-      console.log("Checking score:", score);
-      checkTopScore(score)
-        .then((isTop100) => {
-          console.log("Is top 100?", isTop100);
-          if (isTop100) {
-            console.log("Setting showNameInput to true");
-            setShowNameInput(true);
-          }
-          setCheckedScore(true);
-        })
-        .catch((err) => {
-          console.error("Error checking score:", err);
-          setCheckedScore(true);
-        });
-    }
-  }, [score, checkedScore]);
 
   const handleNameSubmit = async (name: string) => {
     try {
@@ -131,7 +111,10 @@ const ResultsDisplay = ({
       {showNameInput && (
         <NameInputModal
           onSubmit={handleNameSubmit}
-          onClose={() => setShowNameInput(false)}
+          onClose={() => {
+            setShowNameInput(false);
+            router.push("/leaderboard");
+          }}
           error={error}
         />
       )}

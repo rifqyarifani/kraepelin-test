@@ -3,30 +3,8 @@
 import { prisma } from "@/lib/prisma";
 
 export async function checkTopScore(score: number): Promise<boolean> {
-  try {
-    // Count how many scores are lower than or equal to the current score
-    const lowerOrEqualScores = await prisma.leaderboardEntry.count({
-      where: {
-        score: {
-          lte: score,
-        },
-      },
-    });
-
-    // Count total number of scores
-    const totalScores = await prisma.leaderboardEntry.count();
-
-    // Calculate position from the top
-    const positionFromTop = totalScores - lowerOrEqualScores + 1;
-
-    console.log(`Score ${score} is at position ${positionFromTop} from top (total: ${totalScores})`);
-    
-    // If position from top is less than or equal to 100, it's in the top 100
-    return positionFromTop <= 100;
-  } catch (error) {
-    console.error("Error checking top score:", error);
-    return false;
-  }
+  // Always return true to show the prompt
+  return true;
 }
 
 export async function saveLeaderboardEntry(data: {
