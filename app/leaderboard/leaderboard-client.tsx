@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Search } from "lucide-react";
 import { getLeaderboard } from "@/app/actions/leaderboard";
 
@@ -45,8 +45,20 @@ export default function LeaderboardClient({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cache = useRef<
+    Record<string, { data: LeaderboardEntry[]; timestamp: number }>
+  >({});
+  const CACHE_DURATION = 60 * 1000; // 60 seconds
 
   const fetchData = async (timeRange: "all" | "week" | "month" | "today") => {
+    // Check cache first
+    const now = Date.now();
+    const cachedData = cache.current[timeRange];
+    if (cachedData && now - cachedData.timestamp < CACHE_DURATION) {
+      setEntries(cachedData.data);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -66,6 +78,12 @@ export default function LeaderboardClient({
               : undefined,
         })
       );
+
+      // Update cache
+      cache.current[timeRange] = {
+        data: entriesWithRank,
+        timestamp: now,
+      };
 
       setEntries(entriesWithRank);
     } catch (error) {
