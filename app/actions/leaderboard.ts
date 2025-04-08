@@ -3,6 +3,28 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+async function withRetry<T>(operation: () => Promise<T>): Promise<T> {
+  let lastError;
+  
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${i + 1} failed:`, error);
+      
+      if (i < MAX_RETRIES - 1) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
 export async function saveLeaderboardEntry(data: {
   name: string;
   score: number;
@@ -35,24 +57,27 @@ export async function saveLeaderboardEntry(data: {
   }
 }
 
-export async function getLeaderboard(timeRange: "today" | "week" | "month" | "all") {
+export async function getLeaderboard(timeRange: "all" | "today" | "week" | "month") {
   try {
-    // Ensure clean connection state
-    await prisma.$connect();
+    await withRetry(async () => {
+      await prisma.$connect();
+    });
     
     if (timeRange === "all") {
-      const entries = await prisma.leaderboardEntry.findMany({
-        select: {
-          id: true,
-          name: true,
-          score: true,
-          accuracy: true,
-          correct: true,
-          incorrect: true,
-          date: true,
-        },
-        orderBy: { score: "desc" },
-        take: 100,
+      const entries = await withRetry(async () => {
+        return await prisma.leaderboardEntry.findMany({
+          select: {
+            id: true,
+            name: true,
+            score: true,
+            accuracy: true,
+            correct: true,
+            incorrect: true,
+            date: true,
+          },
+          orderBy: { score: "desc" },
+          take: 100,
+        });
       });
       
       return { 
@@ -79,23 +104,25 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
         break;
     }
     
-    const entries = await prisma.leaderboardEntry.findMany({
-      select: {
-        id: true,
-        name: true,
-        score: true,
-        accuracy: true,
-        correct: true,
-        incorrect: true,
-        date: true,
-      },
-      where: {
-        date: {
-          gte: startDate,
+    const entries = await withRetry(async () => {
+      return await prisma.leaderboardEntry.findMany({
+        select: {
+          id: true,
+          name: true,
+          score: true,
+          accuracy: true,
+          correct: true,
+          incorrect: true,
+          date: true,
         },
-      },
-      orderBy: { score: "desc" },
-      take: 100,
+        where: {
+          date: {
+            gte: startDate,
+          },
+        },
+        orderBy: { score: "desc" },
+        take: 100,
+      });
     });
     
     return { 
@@ -109,7 +136,6 @@ export async function getLeaderboard(timeRange: "today" | "week" | "month" | "al
     console.error("Error fetching leaderboard:", error);
     return { success: false, error: "Failed to fetch leaderboard" };
   } finally {
-    // Always disconnect to ensure clean state for next request
     await prisma.$disconnect();
   }
 }

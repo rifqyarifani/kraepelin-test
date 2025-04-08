@@ -58,34 +58,47 @@ export default function LeaderboardClient({
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await getLeaderboard(
-        timeRange as "all" | "today" | "week" | "month"
-      );
+    let retryCount = 0;
+    const maxRetries = 3;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error || "Failed to fetch leaderboard");
+    while (retryCount < maxRetries) {
+      try {
+        const response = await getLeaderboard(
+          timeRange as "all" | "today" | "week" | "month"
+        );
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error || "Failed to fetch leaderboard");
+        }
+
+        const entriesWithRankAndMedals = response.data.map((entry, index) => ({
+          ...entry,
+          rank: index + 1,
+          medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
+        }));
+
+        // Update cache
+        cache.current[timeRange] = {
+          data: entriesWithRankAndMedals,
+          timestamp: Date.now(),
+        };
+
+        setEntries(entriesWithRankAndMedals);
+        break; // Success, exit the retry loop
+      } catch (error) {
+        console.error(`Attempt ${retryCount + 1} failed:`, error);
+
+        if (retryCount === maxRetries - 1) {
+          setError("Failed to load leaderboard. Please try again.");
+          throw error;
+        }
+
+        retryCount++;
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retrying
       }
-
-      const entriesWithRankAndMedals = response.data.map((entry, index) => ({
-        ...entry,
-        rank: index + 1,
-        medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
-      }));
-
-      // Update cache
-      cache.current[timeRange] = {
-        data: entriesWithRankAndMedals,
-        timestamp: Date.now(),
-      };
-
-      setEntries(entriesWithRankAndMedals);
-    } catch (error) {
-      console.error("Error fetching leaderboard:", error);
-      setError("Failed to load leaderboard. Please try again.");
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   const handleRangeChange = async (range: TimeRange) => {
@@ -115,9 +128,9 @@ export default function LeaderboardClient({
 
   return (
     <div className="min-h-screen bg-white p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Time range tabs */}
-        <div className="bg-gray-50 p-1 rounded-lg inline-flex">
+      <div className="max-w-5xl mx-auto">
+        {/* Time range filters */}
+        <div className="flex gap-4 mb-8 bg-gray-100 p-4 rounded-lg">
           {timeRanges.map((range) => (
             <button
               key={range}
@@ -127,6 +140,7 @@ export default function LeaderboardClient({
                   ? "bg-white text-black shadow-sm"
                   : "text-gray-600 hover:text-black"
               }`}
+              disabled={loading}
             >
               {range}
             </button>
@@ -134,48 +148,69 @@ export default function LeaderboardClient({
         </div>
 
         {/* Search input */}
-        <div className="relative">
-          <Search
-            size={20}
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-          />
+        <div className="relative mb-8">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder="Search by name..."
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-sm pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+            disabled={loading}
           />
         </div>
 
-        {/* Leaderboard table */}
-        <div className="bg-white rounded-lg overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-gray-50 text-sm font-medium text-gray-600">
-            <div>Rank</div>
-            <div>User</div>
-            <div>Score</div>
-            <div>Accuracy</div>
-            <div>Date</div>
-          </div>
-
-          {/* Table body */}
-          <div className="divide-y divide-gray-100">
-            {loading ? (
-              <div className="px-6 py-8 text-center text-gray-500">
-                Loading...
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </div>
-            ) : error ? (
-              <div className="px-6 py-8 text-center text-red-500">
-                {error}
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">{error}</h3>
                 <button
                   onClick={() => handleRangeChange(timeRange)}
-                  className="block mx-auto mt-2 text-sm text-blue-500 hover:text-blue-600"
+                  className="mt-2 text-sm text-red-600 hover:text-red-500"
                 >
-                  Try Again
+                  Try again
                 </button>
               </div>
-            ) : filteredData.length === 0 ? (
+            </div>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        )}
+
+        {/* Leaderboard table */}
+        {!loading && !error && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-500 text-sm">
+              <div>Rank</div>
+              <div>Name</div>
+              <div>Score</div>
+              <div>Accuracy</div>
+              <div>Date</div>
+            </div>
+
+            {filteredData.length === 0 ? (
               <div className="px-6 py-8 text-center text-gray-500">
                 No entries found
               </div>
@@ -229,7 +264,7 @@ export default function LeaderboardClient({
               ))
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
