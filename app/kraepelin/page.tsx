@@ -79,7 +79,7 @@ const ResultsDisplay = ({
       ? Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100)
       : 0;
 
-  const score = totalCorrect * 10 - totalIncorrect * 5;
+  const score = totalCorrect - totalIncorrect;
 
   // Handle component mount
   useEffect(() => {
@@ -228,7 +228,7 @@ const ResultsDisplay = ({
 
 const KraepelinTest: React.FC = () => {
   const [columns, setColumns] = useState<KraepelinColumn[]>([]);
-  const [timer, setTimer] = useState<number>(120);
+  const [timer, setTimer] = useState<number>(3600);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
@@ -284,7 +284,7 @@ const KraepelinTest: React.FC = () => {
 
   // Reset game state
   const resetGame = () => {
-    setTimer(120);
+    setTimer(3600);
     setIsActive(false);
     setStartTime(null);
     setTotalCorrect(0);
@@ -317,7 +317,7 @@ const KraepelinTest: React.FC = () => {
       interval = setInterval(() => {
         if (startTime) {
           const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-          const remainingTime = Math.max(120 - elapsedSeconds, 0);
+          const remainingTime = Math.max(3600 - elapsedSeconds, 0);
           setTimer(remainingTime);
 
           if (remainingTime === 0) {
@@ -472,7 +472,7 @@ const KraepelinTest: React.FC = () => {
                   <div
                     className="absolute top-0 left-0 h-full bg-[#4096FF] transition-all duration-100"
                     style={{
-                      width: `${(timer / 120) * 100}%`,
+                      width: `${(timer / 3600) * 100}%`,
                     }}
                   />
                 </div>
