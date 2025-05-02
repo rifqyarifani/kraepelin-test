@@ -27,7 +27,7 @@ export default function Home() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/kraepelin"
+            href="/pauli"
             className="inline-flex items-center justify-center px-6 py-4 bg-[#121212] text-white rounded-xl hover:bg-black/90 transition-colors text-lg font-medium gap-2.5 min-w-[180px]"
           >
             <Play

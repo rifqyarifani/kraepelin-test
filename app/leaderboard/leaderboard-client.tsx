@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
-import { getLeaderboard } from "@/app/actions/leaderboard";
 import { formatDate } from "@/lib/utils";
 
 type DbLeaderboardEntry = {
@@ -27,15 +26,15 @@ interface LeaderboardClientProps {
 export default function LeaderboardClient({
   initialData,
 }: LeaderboardClientProps) {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>(
+  const [entries] = useState<LeaderboardEntry[]>(
     initialData.map((entry, index) => ({
       ...entry,
       rank: index + 1,
       medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
     }))
   );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredData = entries.filter((entry) =>
