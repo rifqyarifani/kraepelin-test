@@ -5,8 +5,6 @@ import { Search } from "lucide-react";
 import { getLeaderboard } from "@/app/actions/leaderboard";
 import { formatDate } from "@/lib/utils";
 
-type TimeRange = "Today" | "This Week" | "This Month" | "All Time";
-
 type DbLeaderboardEntry = {
   id: string;
   name: string;
@@ -38,89 +36,7 @@ export default function LeaderboardClient({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<TimeRange>("All Time");
   const [searchQuery, setSearchQuery] = useState("");
-  const cache = useRef<
-    Record<string, { data: LeaderboardEntry[]; timestamp: number }>
-  >({});
-
-  const CACHE_DURATION = 60 * 1000; // 60 seconds
-
-  const fetchData = async (timeRange: string) => {
-    // Check cache first
-    const now = Date.now();
-    const cachedData = cache.current[timeRange];
-    if (cachedData && now - cachedData.timestamp < CACHE_DURATION) {
-      setEntries(cachedData.data);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    let retryCount = 0;
-    const maxRetries = 3;
-
-    while (retryCount < maxRetries) {
-      try {
-        const response = await getLeaderboard(
-          timeRange as "all" | "today" | "week" | "month"
-        );
-
-        if (!response.success || !response.data) {
-          throw new Error(response.error || "Failed to fetch leaderboard");
-        }
-
-        const entriesWithRankAndMedals = response.data.map((entry, index) => ({
-          ...entry,
-          rank: index + 1,
-          medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
-        }));
-
-        // Update cache
-        cache.current[timeRange] = {
-          data: entriesWithRankAndMedals,
-          timestamp: Date.now(),
-        };
-
-        setEntries(entriesWithRankAndMedals);
-        break; // Success, exit the retry loop
-      } catch (error) {
-        console.error(`Attempt ${retryCount + 1} failed:`, error);
-
-        if (retryCount === maxRetries - 1) {
-          setError("Failed to load leaderboard. Please try again.");
-          throw error;
-        }
-
-        retryCount++;
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retrying
-      }
-    }
-
-    setLoading(false);
-  };
-
-  const handleRangeChange = async (range: TimeRange) => {
-    setTimeRange(range);
-    const timeRange =
-      range === "All Time"
-        ? "all"
-        : range === "This Week"
-        ? "week"
-        : range === "This Month"
-        ? "month"
-        : "today";
-
-    await fetchData(timeRange);
-  };
-
-  const timeRanges: TimeRange[] = [
-    "Today",
-    "This Week",
-    "This Month",
-    "All Time",
-  ];
 
   const filteredData = entries.filter((entry) =>
     entry.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -129,24 +45,6 @@ export default function LeaderboardClient({
   return (
     <div className="min-h-screen bg-white p-8">
       <div className="max-w-5xl mx-auto">
-        {/* Time range filters */}
-        <div className="flex gap-4 mb-8 bg-gray-100 p-4 rounded-lg">
-          {timeRanges.map((range) => (
-            <button
-              key={range}
-              onClick={() => handleRangeChange(range)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                timeRange === range
-                  ? "bg-white text-black shadow-sm"
-                  : "text-gray-600 hover:text-black"
-              }`}
-              disabled={loading}
-            >
-              {range}
-            </button>
-          ))}
-        </div>
-
         {/* Search input */}
         <div className="relative mb-8">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -181,12 +79,6 @@ export default function LeaderboardClient({
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                <button
-                  onClick={() => handleRangeChange(timeRange)}
-                  className="mt-2 text-sm text-red-600 hover:text-red-500"
-                >
-                  Try again
-                </button>
               </div>
             </div>
           </div>

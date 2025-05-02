@@ -5,7 +5,7 @@ import { Play, Timer, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { saveLeaderboardEntry } from "@/app/actions/leaderboard";
 
-interface KraepelinColumn {
+interface PauliColumn {
   numbers: number[];
   answers: (number | null)[];
   isCorrect: boolean[];
@@ -215,8 +215,8 @@ const ResultsDisplay = ({
   );
 };
 
-const KraepelinTest: React.FC = () => {
-  const [columns, setColumns] = useState<KraepelinColumn[]>([]);
+const PauliTest: React.FC = () => {
+  const [columns, setColumns] = useState<PauliColumn[]>([]);
   const [timer, setTimer] = useState<number>(60 * 60);
   const [selectedTime, setSelectedTime] = useState<number>(60);
   const [isActive, setIsActive] = useState<boolean>(false);
@@ -230,7 +230,7 @@ const KraepelinTest: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Generate random numbers for a column
-  const generateColumn = (): KraepelinColumn => {
+  const generateColumn = (): PauliColumn => {
     const numbers = Array.from({ length: 7 }, () =>
       Math.floor(Math.random() * 10)
     );
@@ -611,4 +611,4 @@ const KraepelinTest: React.FC = () => {
   );
 };
 
-export default KraepelinTest;
+export default PauliTest;

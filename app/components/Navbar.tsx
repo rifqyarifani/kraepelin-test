@@ -45,9 +45,9 @@ export default function Navbar({ isActive, timer }: NavbarProps) {
               Home
             </Link>
             <Link
-              href="/kraepelin"
+              href="/pauli"
               className={`text-md transition-colors hover:text-[#4096FF] ${
-                pathname === "/kraepelin" ? "text-[#4096FF]" : "text-gray-600"
+                pathname === "/pauli" ? "text-[#4096FF]" : "text-gray-600"
               }`}
             >
               Test
