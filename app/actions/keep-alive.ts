@@ -18,6 +18,7 @@ export async function keepDatabaseAlive() {
     
     return { success: true, count };
   } catch (error) {
+    console.error("Failed to keep database alive:", error);
     return { success: false, error: "Failed to keep database alive" };
   } finally {
     // Always disconnect to ensure clean state for next request

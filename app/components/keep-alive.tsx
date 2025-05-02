@@ -18,7 +18,9 @@ export default function KeepAlive() {
         if (data.success) {
         } else {
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error("Failed to ping database:", error);
+      }
     };
 
     // Call immediately on component mount
