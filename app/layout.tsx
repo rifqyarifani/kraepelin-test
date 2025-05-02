@@ -6,6 +6,7 @@ import RootWrapper from "./components/RootWrapper";
 import KeepAlive from "./components/keep-alive";
 import ScrollbarScript from "./components/ScrollbarScript";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({
         <RootWrapper>
           {children}
           <Analytics />
+          <SpeedInsights />
           <KeepAlive />
         </RootWrapper>
       </body>
