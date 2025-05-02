@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Timer } from "lucide-react";
+import { Play, Timer, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { saveLeaderboardEntry } from "@/app/actions/leaderboard";
 
@@ -76,7 +76,7 @@ const ResultsDisplay = ({
 
   const accuracy =
     totalCorrect + totalIncorrect > 0
-      ? Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100)
+      ? (totalCorrect / (totalCorrect + totalIncorrect)) * 100
       : 0;
 
   const score = totalCorrect - totalIncorrect;
@@ -92,13 +92,6 @@ const ResultsDisplay = ({
 
   const handleNameSubmit = async (name: string) => {
     try {
-      console.log("Submitting score:", {
-        name,
-        score,
-        totalCorrect,
-        totalIncorrect,
-        accuracy,
-      });
       setError(null);
 
       const response = await saveLeaderboardEntry({
@@ -112,12 +105,8 @@ const ResultsDisplay = ({
       if (!response.success) {
         throw new Error(response.error || "Failed to save score");
       }
-
-      console.log("Score submission successful:", response.data);
       setShowNameInput(false);
-      router.push("/leaderboard");
     } catch (error) {
-      console.error("Error saving score:", error);
       setError(
         typeof error === "object" && error !== null && "message" in error
           ? String(error.message)
@@ -165,7 +154,7 @@ const ResultsDisplay = ({
             <div className="bg-[#EFF6FF] rounded-xl p-4 flex justify-between items-center">
               <span className="text-[#1E40AF] text-lg">Accuracy:</span>
               <span className="text-[#1E40AF] text-4xl font-bold">
-                {accuracy}&nbsp;%
+                {accuracy.toFixed(2)}&nbsp;%
               </span>
             </div>
 
@@ -228,14 +217,17 @@ const ResultsDisplay = ({
 
 const KraepelinTest: React.FC = () => {
   const [columns, setColumns] = useState<KraepelinColumn[]>([]);
-  const [timer, setTimer] = useState<number>(3600);
+  const [timer, setTimer] = useState<number>(60 * 60);
+  const [selectedTime, setSelectedTime] = useState<number>(60);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [totalCorrect, setTotalCorrect] = useState<number>(0);
   const [totalIncorrect, setTotalIncorrect] = useState<number>(0);
   const [showResults, setShowResults] = useState<boolean>(false);
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const inputRefs = useRef<(HTMLInputElement | null)[][]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Generate random numbers for a column
   const generateColumn = (): KraepelinColumn => {
@@ -284,7 +276,7 @@ const KraepelinTest: React.FC = () => {
 
   // Reset game state
   const resetGame = () => {
-    setTimer(3600);
+    setTimer(selectedTime * 60);
     setIsActive(false);
     setStartTime(null);
     setTotalCorrect(0);
@@ -304,6 +296,23 @@ const KraepelinTest: React.FC = () => {
       .map(() => Array(6).fill(null));
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -317,7 +326,7 @@ const KraepelinTest: React.FC = () => {
       interval = setInterval(() => {
         if (startTime) {
           const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-          const remainingTime = Math.max(3600 - elapsedSeconds, 0);
+          const remainingTime = Math.max(selectedTime * 60 - elapsedSeconds, 0);
           setTimer(remainingTime);
 
           if (remainingTime === 0) {
@@ -344,7 +353,7 @@ const KraepelinTest: React.FC = () => {
       }, 100); // Update more frequently for smoother display
     }
     return () => clearInterval(interval);
-  }, [isActive, timer, startTime, columns]);
+  }, [isActive, timer, startTime, columns, selectedTime]);
 
   // Handle start button click
   const handleStart = () => {
@@ -430,10 +439,18 @@ const KraepelinTest: React.FC = () => {
     }
   };
 
-  // Format time as MM:SS
+  // Format time as MM:SS or HH:MM:SS
   const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+
+    if (hrs > 0) {
+      return `${hrs.toString().padStart(2, "0")}:${mins
+        .toString()
+        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+
     return `${mins.toString().padStart(2, "0")}:${secs
       .toString()
       .padStart(2, "0")}`;
@@ -450,29 +467,70 @@ const KraepelinTest: React.FC = () => {
       )}
 
       <div className="flex-1 flex flex-col justify-center items-center bg-white gap-4 py-8">
-        <div className="flex gap-4 items-center justify-center w-full max-w-4xl px-4">
+        <div className="flex gap-4 items-center justify-center w-full max-w-4xl">
           {!isActive && !showResults && (
-            <button
-              onClick={handleStart}
-              className="flex items-center justify-center py-1 bg-[#121212] text-white rounded-xl hover:bg-black/90 transition-colors text-lg font-medium gap-1 min-w-[125px]"
-            >
-              <Play
-                size={18}
-                className="text-white"
-                fill="currentColor"
-                strokeWidth={0}
-              />
-              Start Test
-            </button>
+            <div className="flex flex-wrap gap-3 items-center justify-center">
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center justify-between gap-2 py-2 px-4 bg-white border border-gray-300 rounded-xl text-gray-800 text-lg font-medium min-w-[120px]"
+                  aria-haspopup="listbox"
+                  aria-expanded={dropdownOpen}
+                >
+                  {selectedTime} min
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${
+                      dropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 w-full">
+                    {[5, 15, 30, 60].map((time) => (
+                      <div
+                        key={time}
+                        className={`px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors ${
+                          time === selectedTime ? "bg-gray-100 font-medium" : ""
+                        }`}
+                        onClick={() => {
+                          setSelectedTime(time);
+                          setTimer(time * 60);
+                          setDropdownOpen(false);
+                        }}
+                        role="option"
+                        aria-selected={time === selectedTime}
+                      >
+                        {time} min
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleStart}
+                className="flex items-center justify-center py-2 px-5 bg-[#121212] text-white rounded-xl hover:bg-black/90 transition-colors text-lg font-medium gap-1.5 min-w-[125px]"
+              >
+                <Play
+                  size={18}
+                  className="text-white"
+                  fill="currentColor"
+                  strokeWidth={0}
+                />
+                Start Test
+              </button>
+            </div>
           )}
           {isActive && (
-            <div className="w-full flex flex-col items-center gap-2 py-1">
+            <div className="w-full flex flex-col items-center gap-2 py-[9px]">
               <div className="w-full max-w-[600px] flex items-center gap-3">
                 <div className="flex-1 h-2.5 bg-[#E5E7EB] rounded-full relative overflow-hidden">
                   <div
                     className="absolute top-0 left-0 h-full bg-[#4096FF] transition-all duration-100"
                     style={{
-                      width: `${(timer / 3600) * 100}%`,
+                      width: `${(timer / (selectedTime * 60)) * 100}%`,
                     }}
                   />
                 </div>

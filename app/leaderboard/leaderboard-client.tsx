@@ -241,7 +241,7 @@ export default function LeaderboardClient({
                   <div className="text-[#2563EB] font-semibold">
                     {entry.score}
                   </div>
-                  <div>{entry.accuracy.toFixed(1)}%</div>
+                  <div>{entry.accuracy.toFixed(2)}%</div>
                   <div className="text-gray-500 flex items-center gap-2">
                     <svg
                       width="16"

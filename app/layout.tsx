@@ -8,8 +8,8 @@ import KeepAlive from "./components/keep-alive";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Kraepelin Test Platform",
-  description: "Challenge your mental arithmetic skills with Kraepelin Test",
+  title: "Tes Pauli",
+  description: "Tes Pauli",
 };
 
 export default function RootLayout({

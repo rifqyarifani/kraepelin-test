@@ -15,9 +15,7 @@ export default function Home() {
 
         {/* Hero Title */}
         <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-          Master the <span className="text-[#4096FF]">Pauli-Kraepelin</span>
-          <br />
-          Test
+          Master the <span className="text-[#4096FF]">Pauli</span> Test
         </h1>
 
         {/* Description */}

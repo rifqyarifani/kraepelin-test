@@ -16,11 +16,8 @@ export async function keepDatabaseAlive() {
     // This query is lightweight and just counts entries
     const count = await prisma.leaderboardEntry.count();
     
-    console.log(`Database keep-alive successful. Current entry count: ${count}`);
-    
     return { success: true, count };
   } catch (error) {
-    console.error("Error in keep-alive function:", error);
     return { success: false, error: "Failed to keep database alive" };
   } finally {
     // Always disconnect to ensure clean state for next request

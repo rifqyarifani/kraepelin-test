@@ -16,13 +16,9 @@ export default function KeepAlive() {
         const data = await response.json();
 
         if (data.success) {
-          console.log("Database keep-alive successful");
         } else {
-          console.error("Database keep-alive failed:", data.error);
         }
-      } catch (error) {
-        console.error("Error calling keep-alive endpoint:", error);
-      }
+      } catch (error) {}
     };
 
     // Call immediately on component mount

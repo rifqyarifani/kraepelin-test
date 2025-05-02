@@ -29,8 +29,8 @@ export default function Navbar({ isActive, timer }: NavbarProps) {
           href="/"
           className="text-2xl font-semibold tracking-tight transition-colors hover:text-[#4096FF]"
         >
-          <span className="text-[#4096FF]">Pauli</span>
-          <span>Test</span>
+          <span className="text-[#4096FF]">Tes</span>
+          <span>Pauli</span>
         </Link>
 
         {/* Right side - Navigation */}
