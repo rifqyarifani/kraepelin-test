@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import RootWrapper from "./components/RootWrapper";
 import KeepAlive from "./components/keep-alive";
+import ScrollbarScript from "./components/ScrollbarScript";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <ScrollbarScript />
         <RootWrapper>
           {children}
           <KeepAlive />

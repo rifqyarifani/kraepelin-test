@@ -467,7 +467,7 @@ const KraepelinTest: React.FC = () => {
       )}
 
       <div className="flex-1 flex flex-col justify-center items-center bg-white gap-4 py-8">
-        <div className="flex gap-4 items-center justify-center w-full max-w-4xl">
+        <div className="flex gap-4 items-center justify-center w-full max-w-5xl mx-auto px-4">
           {!isActive && !showResults && (
             <div className="flex flex-wrap gap-3 items-center justify-center">
               <div className="relative" ref={dropdownRef}>
