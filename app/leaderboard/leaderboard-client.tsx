@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { Search } from "lucide-react";
-import { formatDate } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
 // Lazy load the LeaderboardTable component
@@ -55,7 +54,7 @@ export default function LeaderboardClient({
     return entries.filter((entry) =>
       entry.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [entries, searchQuery]);
+  }, [entries, searchQuery]) as LeaderboardEntry[];
 
   // Memoize search handler
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
