@@ -1,8 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Search } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+// Lazy load the LeaderboardTable component
+const LeaderboardTable = dynamic(() => import("./leaderboard-table"), {
+  loading: () => (
+    <div className="flex justify-center items-center py-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+  ),
+  ssr: true,
+});
 
 type DbLeaderboardEntry = {
   id: string;
@@ -26,20 +37,30 @@ interface LeaderboardClientProps {
 export default function LeaderboardClient({
   initialData,
 }: LeaderboardClientProps) {
-  const [entries] = useState<LeaderboardEntry[]>(
-    initialData.map((entry, index) => ({
+  // Process data once when component mounts
+  const entries = useMemo(() => {
+    return initialData.map((entry, index) => ({
       ...entry,
       rank: index + 1,
       medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
-    }))
-  );
+    }));
+  }, [initialData]);
+
   const [loading] = useState(false);
   const [error] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredData = entries.filter((entry) =>
-    entry.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Memoize filtered data to prevent unnecessary recalculations
+  const filteredData = useMemo(() => {
+    return entries.filter((entry) =>
+      entry.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [entries, searchQuery]);
+
+  // Memoize search handler
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white p-8">
@@ -54,7 +75,7 @@ export default function LeaderboardClient({
             placeholder="Search by name..."
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearch}
             disabled={loading}
           />
         </div>
@@ -91,71 +112,7 @@ export default function LeaderboardClient({
         )}
 
         {/* Leaderboard table */}
-        {!loading && !error && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-500 text-sm">
-              <div>Rank</div>
-              <div>Name</div>
-              <div>Score</div>
-              <div>Accuracy</div>
-              <div>Date</div>
-            </div>
-
-            {filteredData.length === 0 ? (
-              <div className="px-6 py-8 text-center text-gray-500">
-                No entries found
-              </div>
-            ) : (
-              filteredData.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="grid grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
-                        entry.medal
-                          ? entry.medal === "🥇"
-                            ? "bg-[#FEF9C3] text-[#854D0E]"
-                            : entry.medal === "🥈"
-                            ? "bg-gray-100 text-gray-600"
-                            : "bg-[#FEF3F2] text-[#B42318]"
-                          : "bg-gray-50 text-gray-600"
-                      }`}
-                    >
-                      {entry.rank}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{entry.name}</span>
-                  </div>
-                  <div className="text-[#2563EB] font-semibold">
-                    {entry.score}
-                  </div>
-                  <div>{entry.accuracy.toFixed(2)}%</div>
-                  <div className="text-gray-500 flex items-center gap-2">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M8 5.33333V8L9.33333 9.33333M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z"
-                        stroke="#6B7280"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {formatDate(entry.date)}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        {!loading && !error && <LeaderboardTable data={filteredData} />}
       </div>
     </div>
   );

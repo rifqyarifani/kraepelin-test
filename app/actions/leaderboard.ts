@@ -57,26 +57,32 @@ export async function saveLeaderboardEntry(data: {
   }
 }
 
-export async function getLeaderboard(timeRange: "all" | "today" | "week" | "month") {
+export async function getLeaderboard(timeRange: "all" | "today" | "week" | "month", limit: number = 100) {
   try {
     await withRetry(async () => {
       await prisma.$connect();
     });
     
+    // Define select fields to limit data transfer
+    const selectFields = {
+      id: true,
+      name: true,
+      score: true,
+      accuracy: true,
+      correct: true,
+      incorrect: true,
+      date: true,
+    };
+    
+    // Always use the score index for ordering
+    const orderBy = { score: "desc" as const };
+    
     if (timeRange === "all") {
       const entries = await withRetry(async () => {
         return await prisma.leaderboardEntry.findMany({
-          select: {
-            id: true,
-            name: true,
-            score: true,
-            accuracy: true,
-            correct: true,
-            incorrect: true,
-            date: true,
-          },
-          orderBy: { score: "desc" },
-          take: 100,
+          select: selectFields,
+          orderBy,
+          take: limit,
         });
       });
       
@@ -106,22 +112,14 @@ export async function getLeaderboard(timeRange: "all" | "today" | "week" | "mont
     
     const entries = await withRetry(async () => {
       return await prisma.leaderboardEntry.findMany({
-        select: {
-          id: true,
-          name: true,
-          score: true,
-          accuracy: true,
-          correct: true,
-          incorrect: true,
-          date: true,
-        },
+        select: selectFields,
         where: {
           date: {
             gte: startDate,
           },
         },
-        orderBy: { score: "desc" },
-        take: 100,
+        orderBy,
+        take: limit,
       });
     });
     

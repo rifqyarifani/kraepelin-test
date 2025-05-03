@@ -24,6 +24,7 @@ model LeaderboardEntry {
   date      DateTime @default(now())
 
   @@index([score(sort: Desc)])
+  @@index([date, score(sort: Desc)])
 }
 
 model Todo {

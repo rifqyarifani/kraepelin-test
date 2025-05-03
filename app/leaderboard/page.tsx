@@ -1,8 +1,8 @@
 import LeaderboardClient from "./leaderboard-client";
 import { getLeaderboard } from "@/app/actions/leaderboard";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Change from force-dynamic to static with revalidation
+export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function LeaderboardPage() {
   const timeRange = "all";
