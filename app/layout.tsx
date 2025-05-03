@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import RootWrapper from "./components/RootWrapper";
-import KeepAlive from "./components/keep-alive";
 import ScrollbarScript from "./components/ScrollbarScript";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -28,7 +27,6 @@ export default function RootLayout({
           {children}
           <Analytics />
           <SpeedInsights />
-          <KeepAlive />
         </RootWrapper>
       </body>
     </html>
