@@ -1,25 +1,25 @@
 "use client";
 
 import { useEffect } from "react";
+import { keepDatabaseAlive } from "@/app/actions/keep-alive";
 
 /**
  * This component is designed to keep the database alive by making
- * periodic requests to the keep-alive endpoint. It should be added
+ * periodic requests using server actions. It should be added
  * to the layout or a high-level component that is always rendered.
  */
 export default function KeepAlive() {
   useEffect(() => {
-    // Function to call the keep-alive endpoint
+    // Function to call the keep-alive server action
     const pingDatabase = async () => {
       try {
-        const response = await fetch("/api/keep-alive");
-        const data = await response.json();
+        const result = await keepDatabaseAlive();
 
-        if (data.success) {
-        } else {
+        if (!result.success) {
+          console.error("Failed to keep database alive:", result.error);
         }
       } catch (error) {
-        console.error("Failed to ping database:", error);
+        console.error("Error keeping database alive:", error);
       }
     };
 
