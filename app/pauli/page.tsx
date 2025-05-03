@@ -488,7 +488,7 @@ const PauliTest: React.FC = () => {
 
                 {dropdownOpen && (
                   <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 w-full">
-                    {[5, 15, 30, 60].map((time) => (
+                    {[1, 5, 15, 30, 60].map((time) => (
                       <div
                         key={time}
                         className={`px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors ${
