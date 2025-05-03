@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Search } from "lucide-react";
 import dynamic from "next/dynamic";
+import { getLeaderboard } from "@/app/actions/leaderboard";
 
 // Lazy load the LeaderboardTable component
 const LeaderboardTable = dynamic(() => import("./leaderboard-table"), {
@@ -36,18 +37,49 @@ interface LeaderboardClientProps {
 export default function LeaderboardClient({
   initialData,
 }: LeaderboardClientProps) {
-  // Process data once when component mounts
+  const [data, setData] = useState<DbLeaderboardEntry[]>(initialData);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Process data with rankings
   const entries = useMemo(() => {
-    return initialData.map((entry, index) => ({
+    return data.map((entry, index) => ({
       ...entry,
       rank: index + 1,
       medal: index < 3 ? ["🥇", "🥈", "🥉"][index] : null,
     }));
-  }, [initialData]);
+  }, [data]);
 
-  const [loading] = useState(false);
-  const [error] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Fetch fresh data periodically
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        setLoading(true);
+        const response = await getLeaderboard("all");
+        if (response.success && response.data) {
+          setData(response.data);
+          setError(null);
+        } else {
+          setError("Failed to refresh leaderboard data");
+        }
+      } catch (err) {
+        setError("An error occurred while refreshing the leaderboard");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Initial fetch after component mounts
+    fetchLeaderboard();
+
+    // Set up periodic refresh every 10 seconds
+    const intervalId = setInterval(fetchLeaderboard, 10000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Memoize filtered data to prevent unnecessary recalculations
   const filteredData = useMemo(() => {
@@ -103,15 +135,15 @@ export default function LeaderboardClient({
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Subtle loading indicator */}
         {loading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <div className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-md text-xs font-medium shadow-md animate-pulse">
+            Refreshing...
           </div>
         )}
 
         {/* Leaderboard table */}
-        {!loading && !error && <LeaderboardTable data={filteredData} />}
+        <LeaderboardTable data={filteredData} />
       </div>
     </div>
   );
