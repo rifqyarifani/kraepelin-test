@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { formatDate } from "@/lib/utils";
 import { useVirtualizer, VirtualItem } from "@tanstack/react-virtual";
 import { useRef } from "react";
@@ -23,15 +23,9 @@ interface LeaderboardTableProps {
 
 function LeaderboardTable({ data }: LeaderboardTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const [entries, setEntries] = useState(data);
-
-  // Smoothly update entries when data changes
-  useEffect(() => {
-    setEntries(data);
-  }, [data]);
 
   const rowVirtualizer = useVirtualizer({
-    count: entries.length || 1, // Always have at least 1 item to show "No entries found"
+    count: data.length || 1, // Always have at least 1 item to show "No entries found"
     getScrollElement: () => parentRef.current,
     estimateSize: () => 65, // approximate row height
     overscan: 5,
@@ -47,7 +41,7 @@ function LeaderboardTable({ data }: LeaderboardTableProps) {
         <div>Date</div>
       </div>
 
-      {entries.length === 0 ? (
+      {data.length === 0 ? (
         <div className="px-6 py-8 text-center text-gray-500">
           No entries found
         </div>
@@ -65,7 +59,7 @@ function LeaderboardTable({ data }: LeaderboardTableProps) {
             }}
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow: VirtualItem) => {
-              const entry = entries[virtualRow.index];
+              const entry = data[virtualRow.index];
 
               // Make sure we have entries to display
               if (!entry) return null;
@@ -73,7 +67,7 @@ function LeaderboardTable({ data }: LeaderboardTableProps) {
               return (
                 <div
                   key={entry.id}
-                  className="grid grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors absolute w-full animate-fadeIn"
+                  className="grid grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors absolute w-full"
                   style={{
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
