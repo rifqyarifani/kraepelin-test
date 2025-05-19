@@ -25,20 +25,26 @@ function LeaderboardTable({ data }: LeaderboardTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({
-    count: data.length || 1, // Always have at least 1 item to show "No entries found"
+    count: data.length || 1,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 65, // approximate row height
+    estimateSize: () => 65,
     overscan: 5,
   });
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
-      <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-500 text-sm">
+      {/* Desktop Header */}
+      <div className="hidden sm:grid grid-cols-5 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-500 text-sm">
         <div>Rank</div>
         <div>Name</div>
         <div>Score</div>
         <div>Accuracy</div>
         <div>Date</div>
+      </div>
+
+      {/* Mobile Header */}
+      <div className="sm:hidden px-4 py-3 bg-gray-50 border-b border-gray-200 font-medium text-gray-500 text-sm">
+        Leaderboard
       </div>
 
       {data.length === 0 ? (
@@ -61,57 +67,105 @@ function LeaderboardTable({ data }: LeaderboardTableProps) {
             {rowVirtualizer.getVirtualItems().map((virtualRow: VirtualItem) => {
               const entry = data[virtualRow.index];
 
-              // Make sure we have entries to display
               if (!entry) return null;
 
               return (
                 <div
                   key={entry.id}
-                  className="grid grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors absolute w-full"
+                  className="absolute w-full"
                   style={{
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
-                        entry.medal
-                          ? entry.medal === "🥇"
-                            ? "bg-[#FEF9C3] text-[#854D0E]"
-                            : entry.medal === "🥈"
-                            ? "bg-gray-100 text-gray-600"
-                            : "bg-[#FEF3F2] text-[#B42318]"
-                          : "bg-gray-50 text-gray-600"
-                      }`}
-                    >
-                      {entry.rank}
+                  {/* Desktop Row */}
+                  <div className="hidden sm:grid grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
+                          entry.medal
+                            ? entry.medal === "🥇"
+                              ? "bg-[#FEF9C3] text-[#854D0E]"
+                              : entry.medal === "🥈"
+                              ? "bg-gray-100 text-gray-600"
+                              : "bg-[#FEF3F2] text-[#B42318]"
+                            : "bg-gray-50 text-gray-600"
+                        }`}
+                      >
+                        {entry.rank}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{entry.name}</span>
+                    </div>
+                    <div className="text-[#2563EB] font-semibold">
+                      {entry.score}
+                    </div>
+                    <div>{entry.accuracy.toFixed(2)}%</div>
+                    <div className="text-gray-500 flex items-center gap-2">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M8 5.33333V8L9.33333 9.33333M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z"
+                          stroke="#6B7280"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {formatDate(entry.date)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{entry.name}</span>
-                  </div>
-                  <div className="text-[#2563EB] font-semibold">
-                    {entry.score}
-                  </div>
-                  <div>{entry.accuracy.toFixed(2)}%</div>
-                  <div className="text-gray-500 flex items-center gap-2">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M8 5.33333V8L9.33333 9.33333M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z"
-                        stroke="#6B7280"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {formatDate(entry.date)}
+
+                  {/* Mobile Row */}
+                  <div className="sm:hidden px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
+                            entry.medal
+                              ? entry.medal === "🥇"
+                                ? "bg-[#FEF9C3] text-[#854D0E]"
+                                : entry.medal === "🥈"
+                                ? "bg-gray-100 text-gray-600"
+                                : "bg-[#FEF3F2] text-[#B42318]"
+                              : "bg-gray-50 text-gray-600"
+                          }`}
+                        >
+                          {entry.rank}
+                        </div>
+                        <span className="font-medium">{entry.name}</span>
+                      </div>
+                      <div className="text-[#2563EB] font-semibold">
+                        {entry.score}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div>{entry.accuracy.toFixed(2)}% accuracy</div>
+                      <div className="flex items-center gap-1">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M8 5.33333V8L9.33333 9.33333M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z"
+                            stroke="#6B7280"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        {formatDate(entry.date)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );

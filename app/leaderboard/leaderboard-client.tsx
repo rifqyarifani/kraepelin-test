@@ -62,17 +62,17 @@ export default function LeaderboardClient({
   }, []);
 
   return (
-    <div className="min-h-screen bg-white p-8">
+    <div className="min-h-screen bg-white p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Search input */}
-        <div className="relative mb-8">
+        <div className="relative mb-6 sm:mb-8">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
           <input
             type="text"
             placeholder="Search by name..."
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
             value={searchQuery}
             onChange={handleSearch}
             disabled={loading}
@@ -81,7 +81,7 @@ export default function LeaderboardClient({
 
         {/* Error message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 sm:mb-8">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg
