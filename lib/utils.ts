@@ -1,12 +1,23 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 export function formatDate(dateString: string) {
-  try {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch (error) {
-    console.error("Error formatting date:", dateString, error);
-    return "Invalid date";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    console.error("Invalid date string:", dateString);
+    return "Tanggal tidak valid";
   }
-} 
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatPercent(value: number, fractionDigits = 2) {
+  return `${value.toFixed(fractionDigits).replace(".", ",")}%`;
+}

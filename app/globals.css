@@ -7,9 +7,9 @@
   --foreground: #171717;
 }
 
-/* Fix for scrollbar width issue */
+/* Reserve gutter for the vertical scrollbar so layouts don't shift. */
 html {
-  overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
 
 body {

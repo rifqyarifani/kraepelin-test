@@ -1,139 +1,163 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { cache } from "react";
 import { revalidatePath } from "next/cache";
+import { createClient } from "@/src/lib/supabase/server";
+import {
+  scoreFromAnswers,
+  COLUMNS_PER_PAGE,
+  ANSWERS_PER_COLUMN,
+  NUMBERS_PER_COLUMN,
+} from "@/lib/pauli-game";
+import {
+  getStartDateForRange,
+  type GetLeaderboardResult,
+  type LeaderboardEntryDTO,
+  type LeaderboardTimeRange,
+  type SaveResult,
+} from "./leaderboard-types";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const TABLE = "leaderboard_entries";
+const SELECT = "id, name, score, accuracy, created_at";
 
-async function withRetry<T>(operation: () => Promise<T>): Promise<T> {
-  let lastError;
-  
-  for (let i = 0; i < MAX_RETRIES; i++) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      console.error(`Attempt ${i + 1} failed:`, error);
-      
-      if (i < MAX_RETRIES - 1) {
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+const MAX_NAME = 30;
+const NAME_REGEX = /^[\p{L}\p{N}\p{Zs}._'-]+$/u;
+
+type ValidatedPayload = {
+  name: string;
+  columns: number[][];
+  answers: (number | null)[][];
+};
+
+function isDigit(n: unknown): n is number {
+  return typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= 9;
+}
+
+function validatePayload(
+  data: unknown
+):
+  | { ok: true; value: ValidatedPayload }
+  | { ok: false; error: string } {
+  if (!data || typeof data !== "object") {
+    return { ok: false, error: "Input tidak valid." };
+  }
+  const d = data as Record<string, unknown>;
+
+  const name = typeof d.name === "string" ? d.name.trim() : "";
+  if (!name || name.length > MAX_NAME || !NAME_REGEX.test(name)) {
+    return { ok: false, error: "Nama tidak valid." };
+  }
+
+  if (!Array.isArray(d.columns) || d.columns.length !== COLUMNS_PER_PAGE) {
+    return { ok: false, error: "Data kolom tidak valid." };
+  }
+  for (const col of d.columns) {
+    if (!Array.isArray(col) || col.length !== NUMBERS_PER_COLUMN) {
+      return { ok: false, error: "Data kolom tidak valid." };
+    }
+    for (const n of col) {
+      if (!isDigit(n)) return { ok: false, error: "Data kolom tidak valid." };
+    }
+  }
+
+  if (!Array.isArray(d.answers) || d.answers.length !== COLUMNS_PER_PAGE) {
+    return { ok: false, error: "Data jawaban tidak valid." };
+  }
+  for (const row of d.answers) {
+    if (!Array.isArray(row) || row.length !== ANSWERS_PER_COLUMN) {
+      return { ok: false, error: "Data jawaban tidak valid." };
+    }
+    for (const a of row) {
+      if (a !== null && !isDigit(a)) {
+        return { ok: false, error: "Data jawaban tidak valid." };
       }
     }
   }
-  
-  throw lastError;
+
+  return {
+    ok: true,
+    value: {
+      name,
+      columns: d.columns as number[][],
+      answers: d.answers as (number | null)[][],
+    },
+  };
 }
 
-export async function saveLeaderboardEntry(data: {
-  name: string;
-  score: number;
-  correct: number;
-  incorrect: number;
-  accuracy: number;
-}) {
-  try {
-    // Ensure clean connection state
-    await prisma.$connect();
+export async function saveLeaderboardEntry(
+  data: unknown
+): Promise<SaveResult> {
+  const v = validatePayload(data);
+  if (!v.ok) return { success: false, error: v.error };
 
-    // Use a simple create without transaction for better reliability
-    const result = await prisma.leaderboardEntry.create({
-      data: {
-        ...data,
-        date: new Date(),
-      },
-    });
+  const { correct, incorrect, score, accuracy } = scoreFromAnswers({
+    columns: v.value.columns,
+    answers: v.value.answers,
+  });
 
-    // Force revalidation of the leaderboard page
-    revalidatePath('/leaderboard');
-    
-    return { success: true, data: result };
-  } catch (error) {
+  const maxScore = COLUMNS_PER_PAGE * ANSWERS_PER_COLUMN;
+  if (Math.abs(score) > maxScore) {
+    return { success: false, error: "Skor di luar batas." };
+  }
+
+  const supabase = await createClient();
+  const { data: row, error } = await supabase
+    .from(TABLE)
+    .insert({
+      name: v.value.name,
+      score,
+      correct,
+      incorrect,
+      accuracy,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
     console.error("Error saving leaderboard entry:", error);
-    return { success: false, error: "Failed to save score" };
-  } finally {
-    // Always disconnect to ensure clean state for next request
-    await prisma.$disconnect();
+    return { success: false, error: "Gagal menyimpan skor." };
   }
+
+  revalidatePath("/leaderboard");
+  return { success: true, id: row.id as string };
 }
 
-export async function getLeaderboard(timeRange: "all" | "today" | "week" | "month", limit: number = 100) {
-  try {
-    await withRetry(async () => {
-      await prisma.$connect();
-    });
-    
-    // Define select fields to limit data transfer
-    const selectFields = {
-      id: true,
-      name: true,
-      score: true,
-      accuracy: true,
-      correct: true,
-      incorrect: true,
-      date: true,
-    };
-    
-    // Always use the score index for ordering
-    const orderBy = { score: "desc" as const };
-    
-    if (timeRange === "all") {
-      const entries = await withRetry(async () => {
-        return await prisma.leaderboardEntry.findMany({
-          select: selectFields,
-          orderBy,
-          take: limit,
-        });
-      });
-      
-      return { 
-        success: true, 
-        data: entries.map(entry => ({
-          ...entry,
-          date: entry.date.toISOString()
-        }))
-      };
+export const getLeaderboard = cache(
+  async (
+    timeRange: LeaderboardTimeRange,
+    limit: number = 100
+  ): Promise<GetLeaderboardResult> => {
+    const supabase = await createClient();
+    let query = supabase.from(TABLE).select(SELECT);
+    if (timeRange !== "all") {
+      const startDate = getStartDateForRange(timeRange);
+      if (startDate) query = query.gte("created_at", startDate.toISOString());
     }
-    
-    const now = new Date();
-    let startDate = new Date(now);
-    
-    switch (timeRange) {
-      case "today":
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "week":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "month":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
+    const { data, error } = await query
+      .order("score", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("Error fetching leaderboard:", error);
+      return { success: false, error: "Gagal memuat papan peringkat." };
     }
-    
-    const entries = await withRetry(async () => {
-      return await prisma.leaderboardEntry.findMany({
-        select: selectFields,
-        where: {
-          date: {
-            gte: startDate,
-          },
-        },
-        orderBy,
-        take: limit,
-      });
-    });
-    
-    return { 
-      success: true, 
-      data: entries.map(entry => ({
-        ...entry,
-        date: entry.date.toISOString()
-      }))
-    };
-  } catch (error) {
-    console.error("Error fetching leaderboard:", error);
-    return { success: false, error: "Failed to fetch leaderboard" };
-  } finally {
-    await prisma.$disconnect();
+
+    const rows: LeaderboardEntryDTO[] = (data ?? []).map(
+      (entry: {
+        id: string;
+        name: string;
+        score: number;
+        accuracy: number;
+        created_at: string;
+      }) => ({
+        id: entry.id,
+        name: entry.name,
+        score: entry.score,
+        accuracy: entry.accuracy,
+        date: entry.created_at,
+      })
+    );
+
+    return { success: true, data: rows };
   }
-}
+);
