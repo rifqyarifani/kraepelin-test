@@ -37,6 +37,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials.
 ```env
 NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="<your-anon-public-key>"
+NEXT_PUBLIC_SITE_URL="https://your-domain.com"
 ```
 
 Get both from: **Supabase dashboard → Project Settings → API**.
@@ -112,7 +113,24 @@ The score is bounded by the number of answers the user submitted (max 48 correct
 
 ## Deployment
 
-The app is Vercel-ready. Set the same two environment variables in the Vercel dashboard. Run the SQL migration in the Supabase dashboard before the first deploy.
+The app is Vercel-ready. Set the same Supabase environment variables and `NEXT_PUBLIC_SITE_URL` in the Vercel dashboard. Run the SQL migration in the Supabase dashboard before the first deploy.
+
+### SEO
+
+Set `NEXT_PUBLIC_SITE_URL` to the production domain so canonical URLs, Open Graph URLs, `robots.txt`, and `sitemap.xml` point at the public site. After deployment, submit `https://your-domain.com/sitemap.xml` in Google Search Console and request indexing for the homepage.
+
+### Supabase keep-alive
+
+Free Supabase projects can be paused after low activity. This repo includes a Vercel Cron job in `vercel.json` that calls `/api/keepalive` once per day. The route performs a tiny read against `leaderboard_entries`, which keeps the project active without writing junk data.
+
+In Vercel, set a random `CRON_SECRET` environment variable. Vercel Cron sends it as a bearer token automatically, and `/api/keepalive` rejects requests with the wrong token when the variable is configured.
+
+If you do not host on Vercel, point another external scheduler at:
+
+```text
+GET https://your-domain.com/api/keepalive
+Authorization: Bearer <CRON_SECRET>
+```
 
 ## License
 

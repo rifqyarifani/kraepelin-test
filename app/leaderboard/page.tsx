@@ -5,8 +5,12 @@ import { getLeaderboard } from "@/app/actions/leaderboard";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Papan Peringkat — Tes Pauli",
-  description: "Lihat skor tertinggi dari seluruh pemain Tes Pauli.",
+  title: "Papan Peringkat Tes Pauli",
+  description:
+    "Lihat skor tertinggi latihan Tes Pauli online dan bandingkan hasil berdasarkan skor serta akurasi.",
+  alternates: {
+    canonical: "/leaderboard",
+  },
 };
 
 export default async function LeaderboardPage() {
